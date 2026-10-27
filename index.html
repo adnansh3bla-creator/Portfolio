@@ -229,7 +229,7 @@ body.viewing-doc nav,body.viewing-doc .to-top{display:none}
 <nav><div class="container nav">
   <a class="logo" href="#home">ADNAN<span>.</span></a>
   <div class="links" id="navLinks">
-    <a href="#about">About</a><a href="#technical">Technical</a><a href="#computel">COMPUTEL</a><a href="#business">Business</a><a href="#education">Education</a><a href="#contact">Contact</a><a href="#languages">Languages</a>
+    <a href="#about">About</a><a href="#technical">Technical</a><a href="#computel">COMPUTEL</a><a href="#business">Business</a><a href="#education">Education</a><a href="#languages">Languages</a><a href="#contact">Contact</a>
   </div>
   <div class="nav-right">
     <button class="icon-btn" id="themeToggle" type="button" aria-pressed="false" aria-label="Switch to light theme">☀️</button>
@@ -297,14 +297,6 @@ body.viewing-doc nav,body.viewing-doc .to-top{display:none}
 <section id="education"><div class="container"><div class="head"><div class="kicker">Education</div><h2>Information Technology Management.</h2></div>
 <div class="card"><div class="date">2023 — Present</div><h3>Lebanese American University</h3><p>B.S. in Information Technology Management — Expected Graduation 2027</p><p class="small" style="margin-top:8px">Minor in Computer Science</p></div></div></section>
 
-<section id="contact"><div class="container"><div class="cta"><div class="kicker">Contact</div><h2>Let's connect.</h2><p class="small">For professional opportunities, business collaboration or questions about my experience, feel free to get in touch.</p>
-<div class="actions">
-<a class="btn primary" href="mailto:adnanz2005@hotmail.com">Email Me</a>
-<button class="btn" type="button" id="copyEmailBtn">Copy Email</button>
-<a class="btn" href="tel:+96181980890">Call 81 980 890</a>
-<button class="btn" type="button" data-doc="resume">View Resume</button>
-</div></div></div></section>
-
 <section id="languages"><div class="container"><div class="head"><div class="kicker">Languages</div><h2>Languages I speak.</h2>
 <p>Each dot is one step of proficiency. Green means I have it, grey means room to grow.</p></div>
 <div class="lang-grid">
@@ -317,6 +309,14 @@ body.viewing-doc nav,body.viewing-doc .to-top{display:none}
   <div class="card lang-card"><span class="lang-native" lang="fr" aria-hidden="true">Salut</span><div class="lang-top"><h3>French</h3><span class="lang-score">2 / 5</span></div>
     <div class="dots" role="img" aria-label="French: 2 out of 5"><span class="dot-l on"></span><span class="dot-l on"></span><span class="dot-l"></span><span class="dot-l"></span><span class="dot-l"></span></div></div>
 </div></div></section>
+
+<section id="contact"><div class="container"><div class="cta"><div class="kicker">Contact</div><h2>Let's connect.</h2><p class="small">For professional opportunities, business collaboration or questions about my experience, feel free to get in touch.</p>
+<div class="actions">
+<a class="btn primary" href="mailto:adnanz2005@hotmail.com">Email Me</a>
+<button class="btn" type="button" id="copyEmailBtn">Copy Email</button>
+<a class="btn" href="tel:+96181980890">Call 81 980 890</a>
+<button class="btn" type="button" data-doc="resume">View Resume</button>
+</div></div></div></section>
 </main>
 <footer><div class="container foot"><span>© 2026 Adnan Shaaban. Professional Portfolio.</span><span>IT Management · Networking · Business · Digital Marketing</span></div></footer>
 
@@ -345,7 +345,8 @@ body.viewing-doc nav,body.viewing-doc .to-top{display:none}
 </div>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
 <script>
 (function(){
   // ---- Theme toggle ----
@@ -500,13 +501,6 @@ body.viewing-doc nav,body.viewing-doc .to-top{display:none}
   var zoomResetBtn = document.getElementById('zoomReset');
   var zoomLevel = document.getElementById('zoomLevel');
 
-  // pdf.js needs to know where its worker lives. If a browser/host blocks
-  // background workers, pdf.js automatically falls back to running on the
-  // main thread using this same file.
-  if(window.pdfjsLib){
-    try{ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'; }catch(e){}
-  }
-
   var ZOOM_MIN = 0.4, ZOOM_MAX = 4, ZOOM_STEP = 0.2;
   var FALLBACK_BASE = 820, FALLBACK_MAX = 3;
   var zoom = 1, baseScale = 1, currentPdf = null, renderToken = 0;
@@ -632,7 +626,8 @@ body.viewing-doc nav,body.viewing-doc .to-top{display:none}
       var raw = atob(doc.pdf.split(',')[1]);
       var bytes = new Uint8Array(raw.length);
       for(var i = 0; i < raw.length; i++){ bytes[i] = raw.charCodeAt(i); }
-      pdfjsLib.getDocument({ data: bytes }).promise.then(function(pdf){
+      try{ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'; }catch(e){}
+      pdfjsLib.getDocument({ data: bytes, isEvalSupported: false }).promise.then(function(pdf){
         if(openKey !== key) return;
         return pdf.getPage(1).then(function(page){
           if(openKey !== key) return;
@@ -685,8 +680,37 @@ body.viewing-doc nav,body.viewing-doc .to-top{display:none}
 
   // Deep link support: opening this page directly at #resume or #letter
   // (e.g. a bookmarked or shared link) opens the viewer immediately.
-  var initialHash = decodeURIComponent(location.hash.replace(/^#/, ''));
-  if(DOCS[initialHash]) showDocPage(initialHash);
+  function openInitialDoc(){
+    var initialHash = decodeURIComponent(location.hash.replace(/^#/, ''));
+    if(DOCS[initialHash]) showDocPage(initialHash);
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', openInitialDoc); }
+  else { openInitialDoc(); }
+
+  // ---- Download PDF ----
+  // On a normal website the button below is a plain download link. Inside
+  // claude.ai's published-page viewer plain download links are blocked, so
+  // there it uses the viewer's built-in "save file" feature instead.
+  var downloadsCap = null;
+  try{
+    if(window.claude && typeof window.claude.use === 'function'){
+      window.claude.use('downloads').then(function(d){ downloadsCap = d || null; }).catch(function(){});
+    }
+  }catch(e){}
+  docPageDownload.addEventListener('click', function(e){
+    var doc = DOCS[openKey];
+    if(!downloadsCap || !doc) return;           // normal link behaviour
+    e.preventDefault();
+    var raw = atob(doc.pdf.split(',')[1]);
+    var bytes = new Uint8Array(raw.length);
+    for(var i = 0; i < raw.length; i++){ bytes[i] = raw.charCodeAt(i); }
+    downloadsCap.save({ filename: doc.filename, data: new Blob([bytes], { type: 'application/pdf' }) }).then(function(){
+      docPageNote.textContent = 'Saved: ' + doc.filename;
+    }).catch(function(err){
+      if(err && err.code === 'declined') return;
+      docPageNote.textContent = 'Saving isn\'t available in this view. Open the portfolio on its own address to download the PDF.';
+    });
+  });
 })();
 </script>
 
